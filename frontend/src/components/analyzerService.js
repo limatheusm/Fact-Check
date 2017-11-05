@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 import {
-    Text,
-    TextInput,
     Button,
     View,
     Dimensions,
@@ -17,27 +15,40 @@ import Snippet from './snippet'
 export default class AnalyzerService extends Component {
     constructor(props) {
         super(props);
+        this.PORT = 5050;
         this.state = { claim: '', snippets: [], loading: false };
-        //this.client = net.createConnection(5050);
-
         this.handleChangeClaim = this.handleChangeClaim.bind(this);
     };
 
     getSnippets() {
-        let snippet = this.state.claim;
-        let snippet1 = 'Snippet 1';
-        let snippet2 = 'Snippet 2';
 
+        // Apagar snippets anteriores
+        this.setState({...this.state, snippets: []})
+        
+        // Cria copia
+        let snippets = [...this.state.snippets];
 
-        let snippets = [ ...this.state.snippets ];
-        snippets.push(snippet1);
-        snippets.push(snippet2);
-        if (snippet) { snippets.push(snippet); }
-        this.setState({ ...this.state, snippets});
+        // Conecta via Socket TCP ao backend
+        let client = net.createConnection(this.PORT);
+
+        // Envia msg
+        client.write(this.state.claim);
+        
+        // Starta loading
+        this.setState({ ...this.state, loading: true });
+
+        // Retorno do server
+        client.on('data', data => {
+            console.log('Received: ' + data);
+            let snippet = data.toString('utf-8');
+            snippets.push(snippet)
+            this.setState({ ...this.state, snippets, loading: false });
+            client.destroy(); // kill client after server's response
+        });
     }
 
     clear() {
-        this.setState({...this.state, claim: '', snippets: [], loading: false})
+        this.setState({ ...this.state, claim: '', snippets: [], loading: false });
     }
 
     handleChangeClaim(claim) {
@@ -46,7 +57,7 @@ export default class AnalyzerService extends Component {
 
     renderActivityIndicator() {
         if (this.state.loading) {
-            return <ActivityIndicator color='white' />
+            return <ActivityIndicator color='white' />;
         }
     }
 
