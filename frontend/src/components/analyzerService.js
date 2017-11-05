@@ -24,9 +24,6 @@ export default class AnalyzerService extends Component {
 
         // Apagar snippets anteriores
         this.setState({...this.state, snippets: []})
-        
-        // Cria copia
-        let snippets = [...this.state.snippets];
 
         // Conecta via Socket TCP ao backend
         let client = net.createConnection(this.PORT);
@@ -39,9 +36,8 @@ export default class AnalyzerService extends Component {
 
         // Retorno do server
         client.on('data', data => {
-            console.log('Received: ' + data);
-            let snippet = data.toString('utf-8');
-            snippets.push(snippet)
+            let snippets = JSON.parse(data).phrases;
+            console.log(snippets);
             this.setState({ ...this.state, snippets, loading: false });
             client.destroy(); // kill client after server's response
         });
