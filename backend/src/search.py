@@ -26,7 +26,8 @@ class Search(object):
         snippet = {}
         try:
             snippet['url'] = self.url
-            snippet['result_stats'] = soup.find("div", {"id": "resultStats"}).text
+            snippet['phrase'] = query
+            snippet['results'] = soup.find("div", {"id": "resultStats"}).text
             snippet['title'] = soup.find("h3", class_="r").find("a").text
             snippet['description'] = soup.find("span", class_="st").text
         except:

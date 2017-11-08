@@ -1,5 +1,6 @@
 import socket
 import json
+from search import Search
 
 HOST = ''              # Endereco IP do Servidor
 PORT = 5050            # Porta que o Servidor esta
@@ -12,15 +13,28 @@ while True:
     client, addr = socket_tcp.accept()
     print ('Conectado por {}'.format(addr))
     while True:
+        # Recebe claim
         claim = client.recv(4096).decode('utf-8')
         if not claim: break
         print ('Mensagem recebido do cliente: {}'.format(claim))
 
-        # Criar snippets
-        snippets = {}
-        snippets["phrases"] = [claim, claim + ' 1', claim + ' 2']
+        # Criar list snippets
+        snippets = []
+        
+        # Efetua busca
+        # Adiciona sinppet na lista
+        print ('Construindo Snippet 1...')
+        snippets.append(Search().searchSnippet(claim))
+        print ('Construindo Snippet 2...')
+        snippets.append(Search().searchSnippet(claim + ' 2'))
+        print ('Construindo Snippet 3...')
+        snippets.append(Search().searchSnippet(claim + ' 3'))
+
+        # Adiciona lista no json
         json_data = json.dumps(snippets)
-        print ("JSON: {}".format(json_data))
+        # print ("JSON: {}".format(json_data))
+
+        print ('Snippets enviados!')
 
         # Enviar snippets
         client.send(json_data.encode())
