@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
     Button,
+    ScrollView,
     View,
     Dimensions,
     StyleSheet,
@@ -36,8 +37,9 @@ export default class AnalyzerService extends Component {
 
         // Retorno do server
         client.on('data', data => {
-            let snippets = JSON.parse(data).phrases;
+            let snippets = JSON.parse(data);
             console.log(snippets);
+            snippets.map(snippet => console.log(snippet))
             this.setState({ ...this.state, snippets, loading: false });
             client.destroy(); // kill client after server's response
         });
@@ -80,8 +82,10 @@ export default class AnalyzerService extends Component {
                         onPress={() => this.clear()}
                     />
                 </View>
-                {this.state.snippets.map(snippet => <Snippet key={snippet} snippet={snippet} />)}
-                {this.state.loading ? <ActivityIndicator color='white' /> : false}
+                <ScrollView>
+                    {this.state.snippets.map(snippet => <Snippet key={snippet.phrase} snippet={snippet} />)}
+                    {this.state.loading ? <ActivityIndicator color='white' /> : false}
+                </ScrollView>
             </View>
         )
     }
