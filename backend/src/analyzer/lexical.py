@@ -20,28 +20,26 @@ class Lexical(object):
         self.tags_infinitive = ['V']
 
     def analyze(self):
-        # Separa tokens
-        _tokens = re.findall(r"[\w']+|[.,!?;]", self.claim)
-        # Recupera tipo, infinitivo, sinonimos, ...
-        for token in _tokens:
-            word = self.__build_word(token)
+        # Separa tokens e Recupera tipo, infinitivo, sinonimos, ...
+        tokens = self.tagger.tag(self.claim)[0]
+        for token in tokens:
+            word = Word()
+            word.token = token[0]
+            word.tag = token[1]
+            # Realiza querys apenas se fizer sentido.
+            if word.tag in self.tags_synonym:
+                word.synonyms = WebScraping(word).get_synonym()
+            if word.tag in self.tags_infinitive:
+                word.infinitive = WebScraping(word).get_infinitive_verb()
             self.words.append(word)
-        
-    def __build_word(self, token):
-        word = Word()
-        tag = self.tagger.tag(token)
-        word.token = token
-        word.tag = tag[0][0][1]
-
-        # Realiza querys apenas se fizer sentido.
-        if word.tag in self.tags_synonym:
-            word.synonyms = WebScraping(word).get_synonym()
-        if word.tag in self.tags_infinitive:
-            word.infinitive = WebScraping(word).get_infinitive_verb()
-        print (word)
-        return word
+        #self.__print_list()
+        return self.words
+    
+    def __print_list(self):
+        for word in self.words:
+            print(word)
 
 if __name__ == "__main__":
-    Lexical("Eu construi o hospital de Trauma em Campina Grande").analyze()
+    Lexical("o Rato roeu a roupa do rei de Roma").analyze()
 
     
