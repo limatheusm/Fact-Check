@@ -1,30 +1,40 @@
 #!/usr/bin/python3
+# -*- coding:utf-8 -*-
 
 from lexical import Lexical
+from word import Word
 import sys
+import traceback
 
 class Syntactic(object):
     
     def __init__(self, words):
         self.words = words
-        self.index = -1
+        self.index = 0
 
     def analyze(self):
-        return self._S()
+        
+        if self._S():
+            return True
+        else:
+            print("Erro na formacao da frase, burro!")
+            return False
     
     # S = Sentenca
     def _S(self):
-        print("S'")
+        # print("S'")
         if self._NP():
             return self._VP()
         elif self._VP():
+            print(self.words[self.index].token)
             return self._NP()
         elif self._ADVP():
             return self._S()
     
     # NP = Sintagma Nominal
     def _NP(self): 
-        print("NP")
+        # print("NP")
+
         aux = self.__next_word()
         if aux.tag in ["ART", "NUM"]:
             if self._N_():
@@ -55,7 +65,8 @@ class Syntactic(object):
     
     # N_ = N LINHA
     def _N_(self):
-        print("N'")
+        # print("N'")
+
         aux = self.__next_word()
         if aux.tag in ["N", "NPROP"]:
             if self._N__():
@@ -81,9 +92,8 @@ class Syntactic(object):
     
     # N__ = N LINHA LINHA
     def _N__(self):
-        print("N''")
-        if self.index + 1 == len(self.words): # Verifica se eh a ultima palavra
-            print("ultima palavra")
+        # print("N''")
+        if self.is_last_word():
             return True
         elif self._AP():
             return self._N__()
@@ -93,7 +103,7 @@ class Syntactic(object):
 
     # AP = Sintagma Adjetival
     def _AP(self):
-        print("AP")
+        # print("AP")
         if self._ADJ_():
             if self._ADVP():
                 return True
@@ -102,11 +112,12 @@ class Syntactic(object):
             return True # Apenas ADJ_ tambem eh aceito
         elif self._ADVP():
             return self._ADJ_()
+
         return False
 
     # ADJ_ = Adjetivo linha
     def _ADJ_(self):
-        print("ADJ'")
+        # print("ADJ'")
         if self.__next_word().tag == "ADJ":
             
             if self._ADJ__():
@@ -125,9 +136,8 @@ class Syntactic(object):
 
     # ADJ__ = Adjetivo linha linha
     def _ADJ__(self):
-        print("ADJ''")
-        if self.index + 1 == len(self.words): # Verifica se eh a ultima palavra
-            print("ultima palavra")
+        # print("ADJ''")
+        if self.is_last_word():
             return True
         
         if self._ADVP():
@@ -140,13 +150,13 @@ class Syntactic(object):
 
     # PP = sintagma preposicional
     def _PP(self):
-        print("PP")
+        # print("PP")
         if "PREP" in self.__next_word().tag:
+            
             if self._NP():
                 return True
             elif self._ADVP():
                 return True
-            
             self.__back_word()
             return False
         else:
@@ -155,8 +165,9 @@ class Syntactic(object):
 
     # VP = Sintagma Verbal
     def _VP(self):
-        print("VP")
+        # print("VP")
         if self._V_():
+            
             if self._PP():
                 return True
 
@@ -175,7 +186,7 @@ class Syntactic(object):
 
     # V_ = Verbo linha
     def _V_(self):
-        print("V'")
+        # print("V'")
         if self._ADVP():
             if self._V_():
                 return self._V__()
@@ -189,39 +200,32 @@ class Syntactic(object):
             elif self._NP():
                 if self._V__():
                     return True
-                self.__back_word()
                 return False
             
             elif self._PP():
                 if self._V__():
                     return True
-                self.__back_word()
                 return False
             
             elif self._AP():
                 if self._V__():
                     return True
-                self.__back_word()
                 return False
             
             elif self._ADVP():
                 if self._V__():
                     return True
-                self.__back_word()
                 return False
 
-            self.__back_word()
             return False
         
         else:
-            self.__back_word()
             return False
     
     # V__ = verbo linha linha
     def _V__(self):
-        print("V''")
-        if self.index + 1 == len(self.words): # Verifica se eh a ultima palavra
-            print("ultima palavra")
+        # print("V''")
+        if self.is_last_word():
             return True
         elif self._NP():
             return self._V__()
@@ -232,9 +236,12 @@ class Syntactic(object):
         return True # Gera vazio
 
     def _VB(self):
-        print("VB")
+        # print("VB")
+
         if self.__next_word().tag == "V":
-            if self.__next_word().tag != "PCP":
+            if self.__next_word().tag == "PCP":
+                return True
+            else:
                 self.__back_word()
             return True
         else:
@@ -243,7 +250,7 @@ class Syntactic(object):
     
     # ADVP = Sintagma 
     def _ADVP(self):
-        print("ADVP")
+        # print("ADVP")
         if self._ADV_():
             if self._ADVP_():
                 return True
@@ -257,9 +264,8 @@ class Syntactic(object):
             return False
     
     def _ADVP_(self):
-        print("ADVP'")
-        if self.index + 1 == len(self.words): # Verifica se eh a ultima palavra
-            print("ultima palavra")
+        # print("ADVP'")
+        if self.is_last_word():
             return True
 
         if self._ADV_():
@@ -268,7 +274,7 @@ class Syntactic(object):
         return True
 
     def _ADV_(self):
-        print("ADV'")
+        # print("ADV'")
         if self.__next_word().tag == "ADV":
             if self._ADV__():
                 return True
@@ -280,9 +286,8 @@ class Syntactic(object):
             return False
     
     def _ADV__(self):
-        print("ADV''")
-        if self.index + 1 == len(self.words): # Verifica se eh a ultima palavra
-            print("ultima palavra")
+        # print("ADV''")
+        if self.is_last_word():
             return True
         
         if self._PP():
@@ -290,25 +295,60 @@ class Syntactic(object):
 
         return True
 
-    # Helper
+    # Helper 0 1 2
     def __next_word(self):
-        if self.index + 1 < len(self.words):
+        if self.index < len(self.words):
+            current = self.words[self.index]
+            # self.index += 1
+
+            if self.index == len(self.words) - 1 and current.token in '.?!;':
+                eof = Word()
+                eof.tag = 'EOF'
+                return eof
+            
             self.index += 1
-            print("NEXT_ATUAL = {} - {}".format(self.words[self.index].token, self.words[self.index].tag))
-            return self.words[self.index]
+            # print("ATUAL = {} - {}".format(current.token, current.tag))
+            return current
+        # Ultrapassou o array
         else:
-            sys.exit("out range")
+            eof = Word()
+            eof.tag = 'EOF'
+            return eof
     
     def __back_word(self):
         self.index -= 1
         print("BACK_ATUAL = {} - {}".format(self.words[self.index].token, self.words[self.index].tag))
         return self.words[self.index]
 
-    
+    def __print_stack(self):
+        print("########")
+        for line in traceback.format_stack():
+            print(line)
+        print("########")
 
+    # Verifica se eh a ultima palavra
+    def is_last_word(self):
+        if self.__next_word().tag == 'EOF': # out range
+            return True
+        else:
+            self.__back_word()
+            return False
 
 if __name__ == "__main__":
-    claim = 'O rato roeu a roupa do rei de roma'
-    words = Lexical(claim).analyze()
-    print(Syntactic(words).analyze())
-    
+    claim = 'Lucas perdeu os sapatos ontem na escola.'
+    # claim_virgula = 'Ricardo, pai de lucas, foi ao supermercado.'
+    claim_indireto_vp_np = 'estudaram astronomia ontem à noite os alunos.'
+    claim_indireto_vp = 'estudaram astronomia.'
+    wrong_claim = 'O vai aqui nao ser.'
+    wrong_claim2 = 'O ir Ricardo.'
+    words = Lexical(claim_indireto_vp_np).analyze()
+    if Syntactic(words).analyze():
+        print("Sucesso")
+    else:
+        print("Falhou")
+
+
+'''
+Algumas ordens indiretas nao funcionam, nesta gramatica nao funciona:
+Nao pode iniciar com complemento, apenas por Sintagma verbal ou nominal
+'''
