@@ -3,7 +3,10 @@
 
 from lexical import Lexical
 from word import Word
+from random import randint
+from random import choice
 import sys
+import copy
 import traceback
 
 class Syntactic(object):
@@ -11,70 +14,85 @@ class Syntactic(object):
     def __init__(self, words):
         self.words = words
         self.index = 0
+        self.snippets = []
 
     def analyze(self):
+        try:
+            return self._S()
         
-        if self._S():
-            return True
-        else:
-            print("Erro na formacao da frase, burro!")
+        except RuntimeError as re:
+            if re.args[0] != 'maximum recursion depth exceeded':
+                # different type of runtime error
+                raise
+            print('Sorry but this syntactic solver was not able to finish '
+                    'analyzing the phrase: {}'.format(re.args[0]))
             return False
     
     # S = Sentenca
     def _S(self):
         # print("S'")
+        '''
+        ToDo
+            # Adicionar apenas o VP
+            # Build new_snippets (arrumar: so fazer quando realmente for algum!)
+        '''
         if self._NP():
+            # print("Metade - {}".format(self.words[self.index].token))
+            self._build_snippets(self.index)
             return self._VP()
-        elif self._VP():
-            print(self.words[self.index].token)
+        elif self._VP(): 
+            # print("Metade - {}".format(self.words[self.index].token))
+            self._build_snippets(self.index)
             return self._NP()
         elif self._ADVP():
             return self._S()
+
+        return False
     
     # NP = Sintagma Nominal
     def _NP(self): 
         # print("NP")
-
-        aux = self.__next_word()
-        if aux.tag in ["ART", "NUM"]:
+        if self.__next_word().tag in ["ART", "NUM"]:
             if self._N_():
                 return True
             else:
                 self.__back_word()
                 return False
-
-        elif aux.tag == "PROADJ":
-            if self._N_():
-                return True
-            elif self._NP():
-                return True
-            else:
-                self.__back_word()
-                return False
-        
-        elif aux.tag == "PROSUB":
-            if self._N_():
-                return True
-            else:
-                self.__back_word()
-                return False
-        
         else:
             self.__back_word()
-            return self._N_()
+        
+        if self.__next_word().tag == "PROSUB":
+            if self._N_():
+                return True
+            
+            self.__back_word()
+            return False
+        else:
+            self.__back_word()
+
+        if self.__next_word().tag == "PROADJ":
+            if self._N_() or self._NP():
+                return True
+            self.__back_word()
+            return False
+        else:
+            self.__back_word()
+        
+        return self._N_()
     
     # N_ = N LINHA
     def _N_(self):
         # print("N'")
-
-        aux = self.__next_word()
-        if aux.tag in ["N", "NPROP"]:
+        if self.__next_word().tag in ["N", "NPROP"]:
             if self._N__():
                 return True
             else:
                 self.__back_word()
                 return False
-        elif "PRO" in aux.tag:
+        else:
+            self.__back_word()
+
+        if "PRO" in self.__next_word().tag:
             if self._N__():
                 return True
             else:
@@ -93,23 +111,23 @@ class Syntactic(object):
     # N__ = N LINHA LINHA
     def _N__(self):
         # print("N''")
-        if self.is_last_word():
+        if self.__is_last_word():
             return True
-        elif self._AP():
+
+        elif self._AP() or self._PP():
             return self._N__()
-        elif self._PP():
-            return self._N__()
+
         return True # Aceita vazio
 
     # AP = Sintagma Adjetival
     def _AP(self):
         # print("AP")
         if self._ADJ_():
-            if self._ADVP():
+            if self._ADVP() or self._PP():
                 return True
-            elif self._PP():
-                return True
+    
             return True # Apenas ADJ_ tambem eh aceito
+        
         elif self._ADVP():
             return self._ADJ_()
 
@@ -119,10 +137,9 @@ class Syntactic(object):
     def _ADJ_(self):
         # print("ADJ'")
         if self.__next_word().tag == "ADJ":
-            
             if self._ADJ__():
                 return True
-
+            
             self.__back_word()
             return False
         else:
@@ -131,19 +148,16 @@ class Syntactic(object):
         if self._ADVP():
             if self._ADJ_():
                 return self._ADJ__()
-            return False
+            
         return False
 
     # ADJ__ = Adjetivo linha linha
     def _ADJ__(self):
         # print("ADJ''")
-        if self.is_last_word():
+        if self.__is_last_word():
             return True
         
-        if self._ADVP():
-            return self._ADJ__()
-        
-        elif self._PP():
+        if self._ADVP() or self._PP():
             return self._ADJ__()
         
         return True # Aceita Vazio
@@ -153,10 +167,9 @@ class Syntactic(object):
         # print("PP")
         if "PREP" in self.__next_word().tag:
             
-            if self._NP():
+            if self._NP() or self._ADVP():
                 return True
-            elif self._ADVP():
-                return True
+
             self.__back_word()
             return False
         else:
@@ -167,19 +180,13 @@ class Syntactic(object):
     def _VP(self):
         # print("VP")
         if self._V_():
-            
-            if self._PP():
-                return True
-
-            elif self._ADVP():
-                return True
+            if self._PP() or self._ADVP():
+                pass
 
             return True # Aceita apenas V'
 
         elif self._ADVP():
-            if self._V_():
-                return True
-            return False
+            return self._V_()
 
         else:
             return False
@@ -190,59 +197,47 @@ class Syntactic(object):
         if self._ADVP():
             if self._V_():
                 return self._V__()
+
             return False
 
         elif self._VB():
-            
             if self._V__():
                 return True
 
-            elif self._NP():
-                if self._V__():
-                    return True
-                return False
-            
-            elif self._PP():
-                if self._V__():
-                    return True
-                return False
-            
-            elif self._AP():
-                if self._V__():
-                    return True
-                return False
-            
-            elif self._ADVP():
-                if self._V__():
-                    return True
-                return False
-
+            elif self._NP() or self._PP() or self._AP() or self._ADVP():
+                return self._V__()
+    
             return False
-        
         else:
             return False
     
     # V__ = verbo linha linha
     def _V__(self):
         # print("V''")
-        if self.is_last_word():
+        if self.__is_last_word():
             return True
-        elif self._NP():
+        elif self._NP() or self._PP() or self._ADVP():
             return self._V__()
-        elif self._PP():
-            return self._V__()
-        elif self._ADVP():
-            return self._V__()
+    
         return True # Gera vazio
 
     def _VB(self):
         # print("VB")
 
+        # if self.__next_word().tag == "V":
+        #     if self.__next_word().tag == "PCP":
+        #         return True
+        #     else:
+        #         self.__back_word()
+        #     return True
+        # else:
+        #     self.__back_word()
+        #     return False
+
         if self.__next_word().tag == "V":
-            if self.__next_word().tag == "PCP":
-                return True
-            else:
+            if self.__next_word().tag != "PCP":
                 self.__back_word()
+            
             return True
         else:
             self.__back_word()
@@ -258,14 +253,11 @@ class Syntactic(object):
             elif self._PP():
                 return self._ADVP_()
             
-            return False
-
-        else:
-            return False
+        return False
     
     def _ADVP_(self):
         # print("ADVP'")
-        if self.is_last_word():
+        if self.__is_last_word():
             return True
 
         if self._ADV_():
@@ -287,20 +279,18 @@ class Syntactic(object):
     
     def _ADV__(self):
         # print("ADV''")
-        if self.is_last_word():
+        if self.__is_last_word():
             return True
         
-        if self._PP():
+        elif self._PP():
             return self._ADV__()
 
         return True
 
-    # Helper 0 1 2
+    # Helper
     def __next_word(self):
         if self.index < len(self.words):
             current = self.words[self.index]
-            # self.index += 1
-
             if self.index == len(self.words) - 1 and current.token in '.?!;':
                 eof = Word()
                 eof.tag = 'EOF'
@@ -309,46 +299,127 @@ class Syntactic(object):
             self.index += 1
             # print("ATUAL = {} - {}".format(current.token, current.tag))
             return current
-        # Ultrapassou o array
-        else:
+        else:   # Ultrapassou o array
             eof = Word()
             eof.tag = 'EOF'
             return eof
     
     def __back_word(self):
         self.index -= 1
-        print("BACK_ATUAL = {} - {}".format(self.words[self.index].token, self.words[self.index].tag))
+        # print("BACK_ATUAL = {} - {}".format(self.words[self.index].token, self.words[self.index].tag))
         return self.words[self.index]
 
     def __print_stack(self):
+        '''
+        Show the current stack
+        '''
         print("########")
         for line in traceback.format_stack():
             print(line)
         print("########")
 
     # Verifica se eh a ultima palavra
-    def is_last_word(self):
+    def __is_last_word(self):
         if self.__next_word().tag == 'EOF': # out range
             return True
         else:
             self.__back_word()
             return False
+    
+    # Build Snippets Functions
+    def _build_snippets(self, pivot_index):
+        '''
+        Build snippets by claim
+        '''
+        # Primeiro Snippet: Retorna o original
+        self.snippets.append(self.__list_to_string(self.words))
+
+        # Segundo Snippet apenas substituir por sinonimos
+        self.__swap_synonyms(self.words)
+
+        # Terceiro Snippet
+        # Verifica se o pivot eh a ultima palavra, caso nao seja faz o reverso: 
+        #   se tiver ponto final, a ultima palavra eh tamanho - 2
+        if not (pivot_index == len(self.words) - 1 \
+            or pivot_index == len(self.words) - 2 \
+            and self.words[pivot_index + 1].tag == 'PU'):
+            reverse_snippet = self.__reverse_snippet(pivot_index)
+            # Quarto Snippet: Caso inverta, tb subistitui por sinonimos
+            self.__swap_synonyms(reverse_snippet)
+        print('Frases criadas: ')
+        print(self.snippets)
+    
+    # Segundo: Trocar sinonimos
+    def __swap_synonyms(self, words):
+        '''
+        Sorteia quantos sinonimos serao substituidos e
+        sorteia qual dentre eles sera trocado
+        '''
+        # Copia list
+        words_clone = copy.deepcopy(words)
+
+        # Recupera indice das palavras que contem sinonimos
+        synonyms_index = [index for index, word in enumerate(words_clone) if word.synonyms]
+
+        # Randomiza quantidade de sinonimos que serao alterados. min=1
+        synonyms_range = randint(1, len(synonyms_index))
+        synonyms_range = 2
+        # Substitui sinonimos de forma aleatoria ate o limite (synonyms_range)
+        count = 0
+        while count < synonyms_range:
+            # Gera um indice randomico dentre as word que contem sinonimos
+            random_index = choice(synonyms_index)
+            # Remove indice escolhido
+            synonyms_index.remove(random_index)
+            # Recupera uma word aleatoria
+            chosen_random_word = words_clone[random_index]
+            # Recupera um sinonimo aleatorio
+            chosen_random_synonym = chosen_random_word.synonyms[randint(0, len(chosen_random_word.synonyms) - 1)]
+            # Subistitui na list de words
+            words_clone[random_index].token = chosen_random_synonym
+            count += 1
+        
+        new_snippet = self.__list_to_string(words_clone)
+        self.snippets.append(new_snippet)
+        return words_clone
+    
+    # Terceiro: Inverter Ordem se possivel
+    def __reverse_snippet(self, pivot_index):
+        words = []
+        for x in range(pivot_index, len(self.words)):
+            words.append(self.words[x])
+
+        for x in range(0, pivot_index):
+            words.append(self.words[x])
+
+        new_snippet = self.__list_to_string(words)
+        self.snippets.append(new_snippet)
+        return words
+
+    def __list_to_string(self, words):
+        '''
+        Convert list to string
+        '''
+        return ' '.join(s.token for s in words if s.tag != 'PU')
 
 if __name__ == "__main__":
-    claim = 'Lucas perdeu os sapatos ontem na escola.'
-    # claim_virgula = 'Ricardo, pai de lucas, foi ao supermercado.'
-    claim_indireto_vp_np = 'estudaram astronomia ontem à noite os alunos.'
+    claim_direto = 'Lucas perdeu os sapatos ontem na escola.'
+    claim_indireto_vp_np = 'estudaram astronomia ontem à noite.'
     claim_indireto_vp = 'estudaram astronomia.'
     wrong_claim = 'O vai aqui nao ser.'
     wrong_claim2 = 'O ir Ricardo.'
-    words = Lexical(claim_indireto_vp_np).analyze()
-    if Syntactic(words).analyze():
-        print("Sucesso")
-    else:
-        print("Falhou")
 
+    claims = [claim_direto, claim_indireto_vp, claim_indireto_vp_np, wrong_claim, wrong_claim2]
+
+    # for claim in claims:
+    #     print("claim: {}".format(claim))
+    #     print("analyzing...")
+    #     print(Syntactic(claim).analyze())
+    #     print()
+    words = Lexical(claim_direto).analyze()
+    print("Sucesso" if Syntactic(words).analyze() else "Falhou")
 
 '''
-Algumas ordens indiretas nao funcionam, nesta gramatica nao funciona:
+Algumas ordens indiretas nao funcionam nesta gramatica:
 Nao pode iniciar com complemento, apenas por Sintagma verbal ou nominal
 '''
