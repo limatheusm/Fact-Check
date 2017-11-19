@@ -11,4 +11,4 @@ class Tagger(object):
     def __init__(self):
         self.tagger = nlpnet.POSTagger("pos-pt", language='pt')
     def tag(self, token):
-        return self.tagger.tag(token)
+        return self.tagger.tag(token)[0]
