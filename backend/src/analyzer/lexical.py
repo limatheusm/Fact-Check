@@ -21,7 +21,7 @@ class Lexical(object):
 
     def analyze(self):
         # Separa tokens e Recupera tipo, infinitivo, sinonimos, ...
-        tokens = self.tagger.tag(self.claim)[0]
+        tokens = self.tagger.tag(self.claim)
         for token in tokens:
             word = Word()
             word.token = token[0]
