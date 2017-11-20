@@ -5,6 +5,7 @@ from lexical import Lexical
 from word import Word
 from random import randint
 from random import choice
+from build_snippet import BuildSnippet
 import sys
 import copy
 import traceback
@@ -15,6 +16,8 @@ class Syntactic(object):
         self.words = words
         self.index = 0
         self.snippets = []
+        self.pivot_index = 0
+        self.buildSnippet = BuildSnippet()
 
     def analyze(self):
         try:
@@ -31,24 +34,42 @@ class Syntactic(object):
     # S = Sentenca
     def _S(self):
         # print("S'")
-        '''
-        ToDo
-            # Adicionar apenas o VP
-            # Build new_snippets (arrumar: so fazer quando realmente for algum!)
-        '''
+
         if self._NP():
             # print("Metade - {}".format(self.words[self.index].token))
-            self._build_snippets(self.index)
-            return self._VP()
+            self.pivot_index = self.index # Guarda Pivot
+            if self._VP():
+                self.snippets = self.buildSnippet.build(self.words, self.pivot_index)
+                print('Frases criadas: ')
+                print(self.snippets)
+                return True
+            else:
+                return False
+            
         elif self._VP(): 
-            # print("Metade - {}".format(self.words[self.index].token))
+            # Apenas VP
             if self.index == len(self.words) \
                 or self.words[self.index].tag == "PU":
                 return True
-            # self._build_snippets(self.index)
-            return self._NP()
+            # print("Metade - {}".format(self.words[self.index].token))
+            self.pivot_index = self.index # Guarda Pivot
+            if self._NP():
+                self.snippets = self.buildSnippet.build(self.words, self.pivot_index)
+                print('Frases criadas: ')
+                print(self.snippets)
+                return True
+            else:
+                return False
+
         elif self._ADVP():
-            return self._S()
+            self.pivot_index = self.index # Guarda Pivot
+            if self._S():
+                self.snippets = self.build_snippets(self.pivot_index)
+                print('Frases criadas: ')
+                print(self.snippets)
+                return True
+            else:
+                return False
 
         return False
     
@@ -333,81 +354,6 @@ class Syntactic(object):
         else:
             self.__back_word()
             return False
-    
-    # Build Snippets Functions
-    def _build_snippets(self, pivot_index):
-        '''
-        Build snippets by claim
-        '''
-        # Primeiro Snippet: Retorna o original
-        self.snippets.append(self.__list_to_string(self.words))
-
-        # Segundo Snippet apenas substituir por sinonimos
-        self.__swap_synonyms(self.words)
-
-        # Terceiro Snippet
-        # Verifica se o pivot eh a ultima palavra, caso nao seja faz o reverso: 
-        #   se tiver ponto final, a ultima palavra eh tamanho - 2
-        if not (pivot_index == len(self.words) - 1 \
-            or pivot_index == len(self.words) - 2 \
-            and self.words[pivot_index + 1].tag == 'PU'):
-            reverse_snippet = self.__reverse_snippet(pivot_index)
-            # Quarto Snippet: Caso inverta, tb subistitui por sinonimos
-            self.__swap_synonyms(reverse_snippet)
-        print('Frases criadas: ')
-        print(self.snippets)
-    
-    # Segundo: Trocar sinonimos
-    def __swap_synonyms(self, words):
-        '''
-        Sorteia quantos sinonimos serao substituidos e
-        sorteia qual dentre eles sera trocado
-        '''
-        # Copia list
-        words_clone = copy.deepcopy(words)
-
-        # Recupera indice das palavras que contem sinonimos
-        synonyms_index = [index for index, word in enumerate(words_clone) if word.synonyms]
-
-        # Randomiza quantidade de sinonimos que serao alterados. min=1
-        max_range_synonyms = randint(1, len(synonyms_index))
-        # Substitui sinonimos de forma aleatoria ate o limite (max_range_synonyms)
-        count = 0
-        while count < max_range_synonyms:
-            # Gera um indice randomico dentre as word que contem sinonimos
-            random_index = choice(synonyms_index)
-            # Remove indice escolhido
-            synonyms_index.remove(random_index)
-            # Recupera uma word aleatoria
-            chosen_random_word = words_clone[random_index]
-            # Recupera um sinonimo aleatorio
-            chosen_random_synonym = chosen_random_word.synonyms[randint(0, len(chosen_random_word.synonyms) - 1)]
-            # Subistitui na list de words
-            words_clone[random_index].token = chosen_random_synonym
-            count += 1
-        
-        new_snippet = self.__list_to_string(words_clone)
-        self.snippets.append(new_snippet)
-        return words_clone
-    
-    # Terceiro: Inverter Ordem se possivel
-    def __reverse_snippet(self, pivot_index):
-        words = []
-        for x in range(pivot_index, len(self.words)):
-            words.append(self.words[x])
-
-        for x in range(0, pivot_index):
-            words.append(self.words[x])
-
-        new_snippet = self.__list_to_string(words)
-        self.snippets.append(new_snippet)
-        return words
-
-    def __list_to_string(self, words):
-        '''
-        Convert list to string
-        '''
-        return ' '.join(s.token for s in words if s.tag != 'PU')
 
 if __name__ == "__main__":
     claim_direto = 'Cássio jogou dinheiro pela janela do predio.' # PERFEITA
