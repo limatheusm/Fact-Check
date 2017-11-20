@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 
-from lexical import Lexical
-from word import Word
-from random import randint
-from random import choice
-from build_snippet import BuildSnippet
 import sys
 import copy
 import traceback
+from random import randint
+from random import choice
+from analyzer.lexical import Lexical
+from analyzer.word import Word
+from analyzer.build_snippet import BuildSnippet
 
 class Syntactic(object):
     
@@ -21,7 +21,10 @@ class Syntactic(object):
 
     def analyze(self):
         try:
-            return self._S()
+            if self._S():
+                return self.snippets
+            else:
+                return False
         
         except RuntimeError as re:
             if re.args[0] != 'maximum recursion depth exceeded':
@@ -40,8 +43,8 @@ class Syntactic(object):
             self.pivot_index = self.index # Guarda Pivot
             if self._VP():
                 self.snippets = self.buildSnippet.build(self.words, self.pivot_index)
-                print('Frases criadas: ')
-                print(self.snippets)
+                # print('Frases criadas: ')
+                # print(self.snippets)
                 return True
             else:
                 return False
@@ -55,8 +58,8 @@ class Syntactic(object):
             self.pivot_index = self.index # Guarda Pivot
             if self._NP():
                 self.snippets = self.buildSnippet.build(self.words, self.pivot_index)
-                print('Frases criadas: ')
-                print(self.snippets)
+                # print('Frases criadas: ')
+                # print(self.snippets)
                 return True
             else:
                 return False
@@ -65,8 +68,8 @@ class Syntactic(object):
             self.pivot_index = self.index # Guarda Pivot
             if self._S():
                 self.snippets = self.build_snippets(self.pivot_index)
-                print('Frases criadas: ')
-                print(self.snippets)
+                # print('Frases criadas: ')
+                # print(self.snippets)
                 return True
             else:
                 return False

@@ -1,6 +1,11 @@
+#!/usr/bin/python3
+# -*- coding:utf-8 -*-
+
 import socket
 import json
 from search import Search
+from analyzer import Syntactic
+from analyzer import Lexical
 
 HOST = ''              # Endereco IP do Servidor
 PORT = 5050            # Porta que o Servidor esta
@@ -14,24 +19,28 @@ while True:
     print ('Conectado por {}'.format(addr))
     while True:
         # Recebe claim
-        claim = client.recv(4096).decode('utf-8')
-        if not claim: break
-        print ('Mensagem recebido do cliente: {}'.format(claim))
+        claim_received = client.recv(4096).decode('utf-8')
+        if not claim_received: break
+        print ('Mensagem recebido do cliente: {}'.format(claim_received))
 
         # Criar list snippets
         snippets = []
-        
-        # Efetua busca
-        # Adiciona sinppet na lista
-        print ('Construindo Snippet 1...')
-        snippets.append(Search().searchSnippet(claim))
-        print ('Construindo Snippet 2...')
-        snippets.append(Search().searchSnippet(claim + ' 2'))
-        print ('Construindo Snippet 3...')
-        snippets.append(Search().searchSnippet(claim + ' 3'))
 
-        # Adiciona lista no json
-        json_data = json.dumps(snippets)
+        # Efetua busca por sininomos e sintatico
+        print ('Executando léxico e buscando sinônimos...')
+        words = Lexical(claim_received).analyze()
+        print ('Executando sintático e construindo novas frases ...')
+        claims = Syntactic(words).analyze()
+
+        if claims:
+            for claim in claims:
+                print ('Buscando informações sobre: {}'.format(claim))
+                snippets.append(Search().searchSnippet(claim))
+                json_data = json.dumps(snippets)
+        else:
+            snippet_error = {}
+            snippet_error['title'] = 'Error'
+            json_data = json.dumps([snippet_error])
         # print ("JSON: {}".format(json_data))
 
         print ('Snippets enviados!')

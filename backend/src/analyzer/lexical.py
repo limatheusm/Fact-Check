@@ -6,9 +6,9 @@ Github: github.com/matheus-lima
 '''
 import sys
 import re
-from tagger import Tagger
-from word import Word
-from web_scraping import WebScraping
+from analyzer.tagger import Tagger
+from analyzer.word import Word
+from analyzer.web_scraping import WebScraping
 
 class Lexical(object):
     def __init__(self, claim):
@@ -41,5 +41,3 @@ class Lexical(object):
 
 if __name__ == "__main__":
     Lexical("o Rato roeu a roupa do rei de Roma").analyze()
-
-    

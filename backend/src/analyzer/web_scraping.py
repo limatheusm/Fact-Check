@@ -3,7 +3,7 @@
 
 import requests
 import re
-from word import Word
+from analyzer.word import Word
 from bs4 import BeautifulSoup
 
 REGEX_VERB = re.compile(r'.* vem do verbo (.*)\. .*')

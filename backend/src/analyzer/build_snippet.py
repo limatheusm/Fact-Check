@@ -1,4 +1,4 @@
-from word import Word
+from analyzer.word import Word
 from random import randint
 from random import choice
 import copy
