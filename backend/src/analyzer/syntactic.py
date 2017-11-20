@@ -42,7 +42,10 @@ class Syntactic(object):
             return self._VP()
         elif self._VP(): 
             # print("Metade - {}".format(self.words[self.index].token))
-            self._build_snippets(self.index)
+            if self.index == len(self.words) \
+                or self.words[self.index].tag == "PU":
+                return True
+            # self._build_snippets(self.index)
             return self._NP()
         elif self._ADVP():
             return self._S()
@@ -137,18 +140,14 @@ class Syntactic(object):
     def _ADJ_(self):
         # print("ADJ'")
         if self.__next_word().tag == "ADJ":
-            if self._ADJ__():
+            if self._ADJ__() and self._ADJ___():
                 return True
-            
+
             self.__back_word()
             return False
         else:
             self.__back_word()
 
-        if self._ADVP():
-            if self._ADJ_():
-                return self._ADJ__()
-            
         return False
 
     # ADJ__ = Adjetivo linha linha
@@ -157,10 +156,19 @@ class Syntactic(object):
         if self.__is_last_word():
             return True
         
-        if self._ADVP() or self._PP():
+        elif self._ADVP() or self._PP():
             return self._ADJ__()
         
         return True # Aceita Vazio
+    
+    def _ADJ___(self):
+        if self.__is_last_word():
+            return True
+        elif self._ADVP():
+            if self._ADJ__():
+                return self._ADJ___()
+            return False
+        return True
 
     # PP = sintagma preposicional
     def _PP(self):
@@ -362,11 +370,10 @@ class Syntactic(object):
         synonyms_index = [index for index, word in enumerate(words_clone) if word.synonyms]
 
         # Randomiza quantidade de sinonimos que serao alterados. min=1
-        synonyms_range = randint(1, len(synonyms_index))
-        synonyms_range = 2
-        # Substitui sinonimos de forma aleatoria ate o limite (synonyms_range)
+        max_range_synonyms = randint(1, len(synonyms_index))
+        # Substitui sinonimos de forma aleatoria ate o limite (max_range_synonyms)
         count = 0
-        while count < synonyms_range:
+        while count < max_range_synonyms:
             # Gera um indice randomico dentre as word que contem sinonimos
             random_index = choice(synonyms_index)
             # Remove indice escolhido
@@ -403,9 +410,9 @@ class Syntactic(object):
         return ' '.join(s.token for s in words if s.tag != 'PU')
 
 if __name__ == "__main__":
-    claim_direto = 'Lucas perdeu os sapatos ontem na escola.'
+    claim_direto = 'Cássio jogou dinheiro pela janela do predio.' # PERFEITA
     claim_indireto_vp_np = 'estudaram astronomia ontem à noite.'
-    claim_indireto_vp = 'estudaram astronomia.'
+    claim_indireto_vp = 'estudaram astronomia ontem.'
     wrong_claim = 'O vai aqui nao ser.'
     wrong_claim2 = 'O ir Ricardo.'
 
