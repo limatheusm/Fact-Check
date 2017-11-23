@@ -21,9 +21,12 @@ class BuildSnippet(object):
         '''
         # Copia list
         words_clone = copy.deepcopy(words)
-
+        
         # Recupera indice das palavras que contem sinonimos
         synonyms_index = [index for index, word in enumerate(words_clone) if word.synonyms]
+
+        if len(synonyms_index) == 0:
+            return
 
         # Randomiza quantidade de sinonimos que serao alterados. min=1
         max_range_synonyms = randint(1, len(synonyms_index))

@@ -34,12 +34,13 @@ while True:
 
         if claims:
             for claim in claims:
-                print ('Buscando informações sobre: {}'.format(claim))
-                snippets.append(Search().searchSnippet(claim))
-                json_data = json.dumps(snippets)
+                if claim:
+                    print ('Buscando informações sobre: {}'.format(claim))
+                    snippets.append(Search().searchSnippet("\"" + claim + "\""))
+                    json_data = json.dumps(snippets)
         else:
             snippet_error = {}
-            snippet_error['title'] = 'Error'
+            snippet_error['title'] = 'Erro na formação da frase!'
             json_data = json.dumps([snippet_error])
         # print ("JSON: {}".format(json_data))
 

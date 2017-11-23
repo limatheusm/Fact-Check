@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     },
     buttonView: {
         flexDirection: 'row',
-        margin: 20
+        margin: 10
     },
     btn: {
         marginLeft: 40
