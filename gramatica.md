@@ -1,4 +1,4 @@
--- Gramática original
+## Gramática original
 
 (1) S -> NP VP 
 (2) S -> VP NP 
@@ -45,7 +45,7 @@ Obs: Após retirar a recursão à esquerda na regra ADJ’, obtivemos uma recurs
 indireta. Após a percepção do loop infinito, este erro foi corrigido e a gramática final
 está logo abaixo.
 
--- Gramática modificada
+## Gramática modificada
 
 Não terminais: {S, NP, VP, ADVP, ADVP’, N’, N’’, AP, ADJ’, PP, V’, V’’, VB, ADV’}
 Terminais: {art, prosub, proadj, num, pro…, n, nprop, adj, prep, v, pcp, adv}
@@ -121,7 +121,7 @@ ADV’ -> adv ADV’’
 ADV’’ -> PP ADV’’
 ADV’’ -> ɛ
 
--- Glossario
+## Glossario
 
 PREP+PRO-KS ->  PREPOSIÇÃO + PRONOME CONECTIVO SUBORDINATIVO
 PCP -> PARTICÍPIO
