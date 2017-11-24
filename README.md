@@ -22,6 +22,10 @@ cd backend/src && python3 server.py
 ```
 cd frontend && npm i
 ```
+Linkar dependências
+```
+react-native link
+```
 Para emular na plataforma ios
 ```
 react-native run-ios
